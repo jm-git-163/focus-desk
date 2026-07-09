@@ -322,6 +322,9 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
 .time-timer__hub::before {
   content: "";
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 22%;
   height: 22%;
   border-radius: 50%;
