@@ -132,44 +132,130 @@
         </div>
       </section>
 
-      <section class="card todo-card" aria-label="할 일 목록">
-        <div class="todo-card__header">
-          <div>
-            <p class="eyebrow">Today</p>
-            <h2>할 일 목록</h2>
+      <section class="card todo-card todo-card--v2" aria-label="할 일 목록">
+        <div class="todo-dashboard">
+          <div class="todo-dashboard__top">
+            <div>
+              <p id="todoGreeting" class="todo-greeting">오늘 할 일을 확인해보세요</p>
+              <div class="todo-progress">
+                <div class="todo-progress__bar">
+                  <div id="todoProgressFill" class="todo-progress__fill"></div>
+                </div>
+                <span id="todoProgressText" class="todo-progress__text">0/0</span>
+              </div>
+            </div>
+            <button id="openTodoModalBtn" class="btn btn--add" type="button">+ 새 스케줄</button>
           </div>
-          <div class="todo__meta">
-            <span id="todoCountText" class="todo-count">0개</span>
-            <button id="clearCompletedBtn" class="link" type="button">완료 삭제</button>
+
+          <div class="dday-section">
+            <div class="dday-section__head">
+              <h3>D-Day 임박</h3>
+              <button id="openDdayModalBtn" class="link" type="button">+ 목표 추가</button>
+            </div>
+            <div id="ddayList" class="dday-list"></div>
+          </div>
+
+          <div class="week-strip" id="weekStrip" aria-label="주간 날짜 선택"></div>
+
+          <div class="todo__filters" role="tablist" aria-label="분류">
+            <button class="chip is-active" type="button" data-filter="all">전체</button>
+            <button class="chip" type="button" data-filter="daily">매일</button>
+            <button class="chip" type="button" data-filter="short">단기</button>
+            <button class="chip" type="button" data-filter="long">장기</button>
+            <button class="chip" type="button" data-filter="done">완료</button>
           </div>
         </div>
 
-        <form id="todoForm" class="todo__form" autocomplete="off">
-          <input
-            id="todoInput"
-            class="todo__input"
-            placeholder="할 일을 입력하고 Enter"
-            maxlength="120"
-          />
-          <button class="btn btn--primary" type="submit">추가</button>
-        </form>
-
-        <div class="todo__filters" role="tablist" aria-label="필터">
-          <button class="chip is-active" type="button" data-filter="all">전체</button>
-          <button class="chip" type="button" data-filter="active">진행중</button>
-          <button class="chip" type="button" data-filter="done">완료</button>
-        </div>
-
-        <p id="dragHint" class="drag-hint">전체 보기에서 핸들(≡)을 드래그해 순서를 바꿀 수 있어요 · 더블클릭으로 수정</p>
-
-        <ul id="todoList" class="todo__list" aria-label="할 일 리스트"></ul>
+        <div id="todoScheduleList" class="schedule-list" aria-label="스케줄 리스트"></div>
 
         <div id="emptyState" class="empty is-hidden">
-          <span class="empty__icon" aria-hidden="true">✦</span>
-          <p>아직 할 일이 없어요.<br />집중할 작업을 하나 추가해보세요.</p>
+          <span class="empty__icon" aria-hidden="true">📋</span>
+          <p>이 날짜에 스케줄이 없어요.<br />'+ 새 스케줄'로 추가해보세요.</p>
         </div>
+
+        <p class="drag-hint">카드 왼쪽 ≡ 드래그로 순서 변경 · 제목 더블클릭 수정</p>
       </section>
     </main>
+
+    <!-- 새 스케줄 모달 -->
+    <div id="todoModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="todoModalTitle">
+      <div class="modal__backdrop" data-close-modal></div>
+      <div class="modal__panel card">
+        <div class="modal__header">
+          <h3 id="todoModalTitle">새 스케줄</h3>
+          <button class="modal__close" type="button" data-close-modal aria-label="닫기">×</button>
+        </div>
+        <form id="todoForm" class="modal__form" autocomplete="off">
+          <div class="form-seg" role="tablist">
+            <button class="form-seg__item is-active" type="button" data-category="daily">매일</button>
+            <button class="form-seg__item" type="button" data-category="short">단기</button>
+            <button class="form-seg__item" type="button" data-category="long">장기</button>
+          </div>
+          <input type="hidden" id="todoCategory" value="daily" />
+
+          <div class="field">
+            <label for="todoTitle">제목</label>
+            <input id="todoTitle" maxlength="80" placeholder="예: 영어 단어 30개 암기" required />
+          </div>
+
+          <div class="field">
+            <label for="todoDesc">설명</label>
+            <textarea id="todoDesc" rows="3" maxlength="200" placeholder="상세 내용을 입력하세요"></textarea>
+          </div>
+
+          <label class="check-row">
+            <input id="todoImportant" type="checkbox" />
+            <span>중요 스케줄</span>
+          </label>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="todoDate">날짜</label>
+              <input id="todoDate" type="date" required />
+            </div>
+            <div class="field">
+              <label for="todoEndDate">종료일 <span class="optional">(장기)</span></label>
+              <input id="todoEndDate" type="date" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="todoTimeStart">시작</label>
+              <input id="todoTimeStart" type="time" value="09:00" />
+            </div>
+            <div class="field">
+              <label for="todoTimeEnd">종료</label>
+              <input id="todoTimeEnd" type="time" value="10:00" />
+            </div>
+          </div>
+
+          <button class="btn btn--register" type="submit">등록</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- D-Day 모달 -->
+    <div id="ddayModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="ddayModalTitle">
+      <div class="modal__backdrop" data-close-dday></div>
+      <div class="modal__panel card modal__panel--sm">
+        <div class="modal__header">
+          <h3 id="ddayModalTitle">D-Day 목표</h3>
+          <button class="modal__close" type="button" data-close-dday aria-label="닫기">×</button>
+        </div>
+        <form id="ddayForm" class="modal__form" autocomplete="off">
+          <div class="field">
+            <label for="ddayTitle">목표 이름</label>
+            <input id="ddayTitle" maxlength="60" placeholder="예: 자격증 시험" required />
+          </div>
+          <div class="field">
+            <label for="ddayDate">목표 날짜</label>
+            <input id="ddayDate" type="date" required />
+          </div>
+          <button class="btn btn--register" type="submit">추가</button>
+        </form>
+      </div>
+    </div>
 
     <footer class="footer">타이머와 할 일은 브라우저에 자동 저장됩니다</footer>
 
