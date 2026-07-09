@@ -464,6 +464,8 @@ const todoCategory = $("#todoCategory");
 const todoTitle = $("#todoTitle");
 const todoDesc = $("#todoDesc");
 const todoImportant = $("#todoImportant");
+const todoPriority = $("#todoPriority");
+const todoProject = $("#todoProject");
 const todoDate = $("#todoDate");
 const todoEndDate = $("#todoEndDate");
 const todoTimeStart = $("#todoTimeStart");
@@ -475,7 +477,10 @@ const ddayList = $("#ddayList");
 const ddayTitle = $("#ddayTitle");
 const ddayDate = $("#ddayDate");
 
-let todoFilter = "all";
+const quickAddForm = $("#quickAddForm");
+const quickAddInput = $("#quickAddInput");
+
+let navView = "today";
 let selectedDate = todayKey();
 let editingId = null;
 let dragId = null;
@@ -488,12 +493,15 @@ let ddays = [];
 
 function migrateTodo(raw, i) {
   const title = raw.title || raw.text || "";
+  const priority = Number(raw.priority);
   return {
     id: raw.id,
     title,
     description: raw.description || "",
     category: ["daily", "short", "long"].includes(raw.category) ? raw.category : "daily",
     important: Boolean(raw.important),
+    priority: priority === 1 || priority === 2 || priority === 3 ? priority : raw.important ? 1 : 2,
+    project: typeof raw.project === "string" ? raw.project : "",
     done: Boolean(raw.done),
     date: raw.date || todayKey(),
     endDate: raw.endDate || "",
@@ -568,15 +576,33 @@ function isOnSelectedDate(todo) {
   return todo.date === sel;
 }
 
+function isTodayTodo(todo) {
+  const d = todayKey();
+  if (todo.category === "daily") return true;
+  if (todo.category === "long" && todo.endDate) return d >= todo.date && d <= todo.endDate;
+  return todo.date === d;
+}
+
+function isUpcomingTodo(todo) {
+  if (todo.done) return false;
+  if (todo.category === "daily") return false;
+  return todo.date > todayKey();
+}
+
 function getFilteredTodos() {
   let list = [...todos].sort((a, b) => a.order - b.order);
-  list = list.filter(isOnSelectedDate);
 
-  if (todoFilter === "daily") list = list.filter((t) => t.category === "daily");
-  else if (todoFilter === "short") list = list.filter((t) => t.category === "short");
-  else if (todoFilter === "long") list = list.filter((t) => t.category === "long");
-  else if (todoFilter === "done") list = list.filter((t) => t.done);
-  else list = list.filter((t) => !t.done || todoFilter === "all");
+  if (navView === "today") {
+    list = list.filter((t) => isOnSelectedDate(t) && isTodayTodo(t));
+  } else if (navView === "inbox") {
+    list = list.filter((t) => isOnSelectedDate(t) && !t.done);
+  } else if (navView === "upcoming") {
+    list = list.filter((t) => isUpcomingTodo(t));
+  } else if (navView === "done") {
+    list = list.filter((t) => t.done);
+  } else if (navView === "daily" || navView === "short" || navView === "long") {
+    list = list.filter((t) => t.category === navView && isOnSelectedDate(t));
+  }
 
   return list.sort((a, b) => {
     if (a.timeStart !== b.timeStart) return a.timeStart.localeCompare(b.timeStart);
@@ -584,9 +610,23 @@ function getFilteredTodos() {
   });
 }
 
-function getTodayTodos() {
-  return todos.filter((t) => isOnSelectedDate(t) && (todoFilter === "all" || todoFilter === t.category || (todoFilter === "done" && t.done)));
+function getStatusClass(todo) {
+  if (todo.done) return "done";
+  if (isTodayTodo(todo)) return "today";
+  if (isUpcomingTodo(todo)) return "upcoming";
+  if (todo.category === "daily") return "daily";
+  return "upcoming";
 }
+
+const NAV_TITLES = {
+  today: "오늘 할 일",
+  inbox: "받은함",
+  upcoming: "예정된 할 일",
+  done: "완료한 할 일",
+  daily: "매일 루틴",
+  short: "단기 목표",
+  long: "장기 목표",
+};
 
 function renderProgress() {
   const todayItems = todos.filter((t) => {
@@ -601,12 +641,7 @@ function renderProgress() {
 
   todoProgressFill.style.width = `${pct}%`;
   todoProgressText.textContent = `${done}/${total}`;
-  todoGreeting.textContent =
-    total === 0
-      ? "오늘 스케줄을 추가해보세요"
-      : done === total
-        ? `오늘 ${total}가지를 모두 완료했어요! 🎉`
-        : `오늘 ${done}가지 완료 · ${total - done}가지 남았어요`;
+  todoGreeting.textContent = NAV_TITLES[navView] || "할 일";
 }
 
 function renderWeekStrip() {
@@ -717,7 +752,7 @@ function renderTodos() {
 
   filtered.forEach((t) => {
     const card = document.createElement("article");
-    card.className = `schedule-card${t.done ? " is-done" : ""}`;
+    card.className = `task-card${t.done ? " is-done" : ""}`;
     card.dataset.id = t.id;
     card.draggable = true;
 
@@ -730,7 +765,7 @@ function renderTodos() {
     card.addEventListener("dragend", () => {
       dragId = null;
       card.classList.remove("is-dragging");
-      $$(".schedule-card").forEach((el) => el.classList.remove("is-drag-over"));
+      $$(".task-card").forEach((el) => el.classList.remove("is-drag-over"));
     });
     card.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -744,54 +779,56 @@ function renderTodos() {
       if (id) reorderTodo(id, t.id);
     });
 
-    const head = document.createElement("div");
-    head.className = "schedule-card__head";
-    head.innerHTML = `
-      <span class="schedule-card__time">${t.timeStart} - ${t.timeEnd}</span>
-      <div class="schedule-card__actions">
-        <span class="schedule-card__handle" title="드래그하여 순서 변경">≡</span>
-      </div>
-    `;
+    const status = document.createElement("span");
+    status.className = `task-card__status task-card__status--${getStatusClass(t)}`;
+    status.title = getStatusClass(t);
 
     const body = document.createElement("div");
-    body.className = "schedule-card__body";
+    body.className = "task-card__body";
 
-    const tags = document.createElement("div");
-    tags.className = "schedule-card__tags";
-    if (t.important) tags.innerHTML += `<span class="tag tag--important">중요</span>`;
-    tags.innerHTML += `<span class="tag tag--cat">${CATEGORY_LABELS[t.category]}</span>`;
+    const top = document.createElement("div");
+    top.className = "task-card__top";
 
     const title = document.createElement("h4");
-    title.className = "schedule-card__title";
+    title.className = "task-card__title";
     title.textContent = t.title;
     title.title = "더블클릭하여 수정";
     title.addEventListener("dblclick", () => startEditTodo(t.id, title));
 
-    body.append(tags, title);
+    const handle = document.createElement("span");
+    handle.className = "task-card__handle";
+    handle.textContent = "≡";
+    handle.title = "드래그하여 순서 변경";
+
+    top.append(title, handle);
+
+    const tags = document.createElement("div");
+    tags.className = "task-card__tags";
+    tags.innerHTML = `<span class="pill pill--p${t.priority}">P${t.priority}</span>`;
+    tags.innerHTML += `<span class="pill pill--time">${t.timeStart} - ${t.timeEnd}</span>`;
+    tags.innerHTML += `<span class="pill pill--cat">${CATEGORY_LABELS[t.category]}</span>`;
+    if (t.project) tags.innerHTML += `<span class="pill pill--project">${escapeHtml(t.project)}</span>`;
+
+    body.append(top, tags);
     if (t.description) {
       const desc = document.createElement("p");
-      desc.className = "schedule-card__desc";
+      desc.className = "task-card__desc";
       desc.textContent = t.description;
       body.append(desc);
     }
 
-    const footer = document.createElement("div");
-    footer.className = "schedule-card__footer";
+    const check = document.createElement("button");
+    check.type = "button";
+    check.className = `task-card__check${t.done ? " is-checked" : ""}`;
+    check.textContent = t.done ? "✓" : "";
+    check.title = t.done ? "완료 취소" : "완료";
+    check.addEventListener("click", () => toggleTodoDone(t.id));
+    check.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (confirm("이 할 일을 삭제할까요?")) removeTodo(t.id);
+    });
 
-    const completeBtn = document.createElement("button");
-    completeBtn.type = "button";
-    completeBtn.className = `btn btn--complete${t.done ? " is-done" : ""}`;
-    completeBtn.textContent = t.done ? "완료됨" : "완료";
-    completeBtn.addEventListener("click", () => toggleTodoDone(t.id));
-
-    const delBtn = document.createElement("button");
-    delBtn.type = "button";
-    delBtn.className = "btn btn--secondary btn--delete-sm";
-    delBtn.textContent = "삭제";
-    delBtn.addEventListener("click", () => removeTodo(t.id));
-
-    footer.append(completeBtn, delBtn);
-    card.append(head, body, footer);
+    card.append(status, body, check);
     todoScheduleList.append(card);
   });
 
@@ -801,17 +838,20 @@ function renderTodos() {
 
 function addTodo(data) {
   const minOrder = todos.length ? Math.min(...todos.map((t) => t.order)) - 1 : 0;
+  const priority = Number(data.priority) || (data.important ? 1 : 2);
   todos.unshift({
     id: uuid(),
     title: data.title,
-    description: data.description,
-    category: data.category,
-    important: data.important,
+    description: data.description || "",
+    category: data.category || "daily",
+    important: priority === 1,
+    priority,
+    project: data.project || "",
     done: false,
-    date: data.date,
-    endDate: data.endDate,
-    timeStart: data.timeStart,
-    timeEnd: data.timeEnd,
+    date: data.date || selectedDate,
+    endDate: data.endDate || "",
+    timeStart: data.timeStart || "09:00",
+    timeEnd: data.timeEnd || "10:00",
     createdAt: Date.now(),
     order: minOrder,
   });
@@ -833,9 +873,11 @@ function removeTodo(id) {
   renderTodos();
 }
 
-function setFilter(f) {
-  todoFilter = f;
-  $$(".chip").forEach((b) => b.classList.toggle("is-active", b.dataset.filter === f));
+function setNav(view) {
+  navView = view;
+  $$(".todo-nav__item").forEach((b) => {
+    b.classList.toggle("is-active", b.dataset.nav === view);
+  });
   renderTodos();
 }
 
@@ -887,22 +929,45 @@ function initTodoEvents() {
     b.addEventListener("click", () => setFormCategory(b.dataset.category));
   });
 
+  todoImportant.addEventListener("change", () => {
+    if (todoImportant.checked) todoPriority.value = "1";
+  });
+
   todoForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const title = todoTitle.value.trim();
     if (!title) return;
+    const priority = Number(todoPriority.value) || 2;
 
     addTodo({
       title,
       description: todoDesc.value.trim(),
       category: todoCategory.value,
-      important: todoImportant.checked,
+      important: priority === 1,
+      priority,
+      project: todoProject.value.trim(),
       date: todoDate.value || selectedDate,
       endDate: todoEndDate.value || "",
       timeStart: todoTimeStart.value || "09:00",
       timeEnd: todoTimeEnd.value || "10:00",
     });
     closeTodoModal();
+  });
+
+  quickAddForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = quickAddInput.value.trim();
+    if (!title) return;
+    addTodo({
+      title,
+      category: navView === "daily" || navView === "short" || navView === "long" ? navView : "short",
+      date: selectedDate,
+      timeStart: "09:00",
+      timeEnd: "10:00",
+      priority: 2,
+    });
+    quickAddInput.value = "";
+    quickAddInput.focus();
   });
 
   ddayForm.addEventListener("submit", (e) => {
@@ -920,8 +985,8 @@ function initTodoEvents() {
     closeDdayModal();
   });
 
-  $$(".chip").forEach((b) => {
-    b.addEventListener("click", () => setFilter(b.dataset.filter));
+  $$(".todo-nav__item").forEach((b) => {
+    b.addEventListener("click", () => setNav(b.dataset.nav));
   });
 
   document.addEventListener("keydown", (e) => {
@@ -946,7 +1011,7 @@ function resetAll() {
   stopTick();
   todos = [];
   ddays = [];
-  todoFilter = "all";
+  navView = "today";
   selectedDate = todayKey();
   stats = { date: todayKey(), sessions: 0, minutes: 0 };
 
@@ -964,7 +1029,7 @@ function resetAll() {
   renderStats();
   renderWeekStrip();
   renderDdays();
-  setFilter("all");
+  setNav("today");
   renderTodos();
   updateDocumentTitle();
 }
@@ -1049,7 +1114,7 @@ function boot() {
   renderStats();
   renderWeekStrip();
   renderDdays();
-  setFilter("all");
+  setNav("today");
   renderTodos();
   persistTimerState();
   persistTodos();

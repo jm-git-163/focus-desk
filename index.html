@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260709" />
+    <link rel="stylesheet" href="./styles.css?v=20260709b" />
   </head>
   <body>
     <header class="topbar">
@@ -135,48 +135,67 @@
         </div>
       </section>
 
-      <section class="card todo-card todo-card--v2" aria-label="할 일 목록">
-        <div class="todo-dashboard">
-          <div class="todo-dashboard__top">
-            <div>
-              <p id="todoGreeting" class="todo-greeting">오늘 할 일을 확인해보세요</p>
-              <div class="todo-progress">
-                <div class="todo-progress__bar">
-                  <div id="todoProgressFill" class="todo-progress__fill"></div>
-                </div>
-                <span id="todoProgressText" class="todo-progress__text">0/0</span>
+      <section class="todo-app card" aria-label="할 일 목록">
+        <div class="todo-app__layout">
+          <aside class="todo-sidebar" aria-label="할 일 네비게이션">
+            <div class="todo-sidebar__profile">
+              <div class="avatar" aria-hidden="true">F</div>
+              <div>
+                <strong>Focus Desk</strong>
+                <span>나의 할 일</span>
               </div>
             </div>
-            <button id="openTodoModalBtn" class="btn btn--add" type="button">+ 새 스케줄</button>
-          </div>
-
-          <div class="dday-section">
-            <div class="dday-section__head">
-              <h3>D-Day 임박</h3>
-              <button id="openDdayModalBtn" class="link" type="button">+ 목표 추가</button>
+            <nav class="todo-nav" id="todoNav">
+              <button class="todo-nav__item is-active" type="button" data-nav="today">
+                <span class="todo-nav__dot todo-nav__dot--green"></span> 오늘
+              </button>
+              <button class="todo-nav__item" type="button" data-nav="inbox">
+                <span class="todo-nav__dot todo-nav__dot--blue"></span> 받은함
+              </button>
+              <button class="todo-nav__item" type="button" data-nav="upcoming">
+                <span class="todo-nav__dot todo-nav__dot--orange"></span> 예정
+              </button>
+              <button class="todo-nav__item" type="button" data-nav="done">
+                <span class="todo-nav__dot todo-nav__dot--gray"></span> 완료
+              </button>
+            </nav>
+            <div class="todo-projects">
+              <p class="todo-projects__label">프로젝트</p>
+              <button class="todo-nav__item" type="button" data-nav="daily"># 매일 루틴</button>
+              <button class="todo-nav__item" type="button" data-nav="short"># 단기 목표</button>
+              <button class="todo-nav__item" type="button" data-nav="long"># 장기 목표</button>
             </div>
+            <button id="openDdayModalBtn" class="todo-sidebar__dday" type="button">+ D-Day 목표</button>
+          </aside>
+
+          <div class="todo-main">
+            <header class="todo-main__head">
+              <div>
+                <p id="todoGreeting" class="todo-greeting">오늘 할 일</p>
+                <div class="todo-progress">
+                  <div class="todo-progress__bar"><div id="todoProgressFill" class="todo-progress__fill"></div></div>
+                  <span id="todoProgressText" class="todo-progress__text">0/0</span>
+                </div>
+              </div>
+              <button id="openTodoModalBtn" class="btn btn--coral" type="button">+ 새 할 일</button>
+            </header>
+
             <div id="ddayList" class="dday-list"></div>
-          </div>
+            <div class="week-strip" id="weekStrip" aria-label="주간 날짜"></div>
 
-          <div class="week-strip" id="weekStrip" aria-label="주간 날짜 선택"></div>
+            <div id="todoScheduleList" class="task-list" aria-label="할 일 리스트"></div>
 
-          <div class="todo__filters" role="tablist" aria-label="분류">
-            <button class="chip is-active" type="button" data-filter="all">전체</button>
-            <button class="chip" type="button" data-filter="daily">매일</button>
-            <button class="chip" type="button" data-filter="short">단기</button>
-            <button class="chip" type="button" data-filter="long">장기</button>
-            <button class="chip" type="button" data-filter="done">완료</button>
+            <div id="emptyState" class="empty is-hidden">
+              <span class="empty__icon">✨</span>
+              <p>할 일이 없어요.<br />아래에서 빠르게 추가하거나 + 새 할 일을 눌러보세요.</p>
+            </div>
+
+            <form id="quickAddForm" class="quick-add" autocomplete="off">
+              <input id="quickAddInput" class="quick-add__input" placeholder="할 일을 입력하세요..." maxlength="80" />
+              <button class="quick-add__btn" type="submit" aria-label="추가">↑</button>
+            </form>
           </div>
         </div>
-
-        <div id="todoScheduleList" class="schedule-list" aria-label="스케줄 리스트"></div>
-
-        <div id="emptyState" class="empty is-hidden">
-          <span class="empty__icon" aria-hidden="true">📋</span>
-          <p>이 날짜에 스케줄이 없어요.<br />'+ 새 스케줄'로 추가해보세요.</p>
-        </div>
-
-        <p class="drag-hint">카드 왼쪽 ≡ 드래그로 순서 변경 · 제목 더블클릭 수정</p>
       </section>
     </main>
 
@@ -208,8 +227,22 @@
 
           <label class="check-row">
             <input id="todoImportant" type="checkbox" />
-            <span>중요 스케줄</span>
+            <span>중요 (P1)</span>
           </label>
+
+          <div class="field">
+            <label for="todoPriority">우선순위</label>
+            <select id="todoPriority" class="settings__select">
+              <option value="2">P2 — 보통</option>
+              <option value="1">P1 — 높음</option>
+              <option value="3">P3 — 낮음</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="todoProject">프로젝트</label>
+            <input id="todoProject" maxlength="40" placeholder="# Focus / @ 업무" />
+          </div>
 
           <div class="field-row">
             <div class="field">
@@ -269,6 +302,6 @@
       />
     </audio>
 
-    <script src="./app.js?v=20260709"></script>
+    <script src="./app.js?v=20260709b"></script>
   </body>
 </html>
