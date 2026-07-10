@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260709c" />
+    <link rel="stylesheet" href="./styles.css?v=20260710a" />
   </head>
   <body>
     <header class="topbar">
@@ -181,7 +181,18 @@
             </header>
 
             <div id="ddayList" class="dday-list"></div>
-            <div class="week-strip" id="weekStrip" aria-label="주간 날짜"></div>
+
+            <div class="month-calendar" id="monthCalendar" aria-label="월간 달력">
+              <div class="month-calendar__header">
+                <button id="calendarPrev" class="month-calendar__nav" type="button" aria-label="이전 달">‹</button>
+                <span id="calendarTitle" class="month-calendar__title">2026년 7월</span>
+                <button id="calendarNext" class="month-calendar__nav" type="button" aria-label="다음 달">›</button>
+              </div>
+              <div class="month-calendar__weekdays" aria-hidden="true">
+                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+              </div>
+              <div class="month-calendar__grid" id="calendarGrid"></div>
+            </div>
 
             <div class="todo-main__body">
               <div id="todoScheduleList" class="task-list" aria-label="할 일 리스트"></div>
@@ -304,6 +315,6 @@
       />
     </audio>
 
-    <script src="./app.js?v=20260709c"></script>
+    <script src="./app.js?v=20260710a"></script>
   </body>
 </html>

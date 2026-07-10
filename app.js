@@ -446,14 +446,16 @@ function applyPreset(mode) {
 // -----------------------
 
 const CATEGORY_LABELS = { daily: "매일", short: "단기", long: "장기" };
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 const todoGreeting = $("#todoGreeting");
 const todoProgressFill = $("#todoProgressFill");
 const todoProgressText = $("#todoProgressText");
 const openTodoModalBtn = $("#openTodoModalBtn");
 const openDdayModalBtn = $("#openDdayModalBtn");
-const weekStrip = $("#weekStrip");
+const calendarGrid = $("#calendarGrid");
+const calendarTitle = $("#calendarTitle");
+const calendarPrev = $("#calendarPrev");
+const calendarNext = $("#calendarNext");
 const todoScheduleList = $("#todoScheduleList");
 const emptyState = $("#emptyState");
 const resetAllBtn = $("#resetAllBtn");
@@ -482,6 +484,8 @@ const quickAddInput = $("#quickAddInput");
 
 let navView = "today";
 let selectedDate = todayKey();
+/** @type {Date} */
+let calendarViewDate = new Date();
 let editingId = null;
 let dragId = null;
 
@@ -644,30 +648,59 @@ function renderProgress() {
   todoGreeting.textContent = NAV_TITLES[navView] || "할 일";
 }
 
-function renderWeekStrip() {
-  weekStrip.innerHTML = "";
-  const base = new Date(selectedDate + "T00:00:00");
-  const dayOfWeek = base.getDay();
-  const start = new Date(base);
-  start.setDate(base.getDate() - dayOfWeek);
+function localDateKey(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
 
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
+function syncCalendarViewToSelected() {
+  calendarViewDate = new Date(selectedDate + "T12:00:00");
+}
+
+function renderMonthCalendar() {
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const today = todayKey();
+
+  calendarTitle.textContent = `${year}년 ${month + 1}월`;
+  calendarGrid.innerHTML = "";
+
+  const first = new Date(year, month, 1);
+  const startOffset = first.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cellCount = startOffset + daysInMonth > 35 ? 42 : 35;
+  const startDate = new Date(year, month, 1 - startOffset);
+
+  for (let i = 0; i < cellCount; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    const key = localDateKey(d);
+
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "week-day";
-    if (key === todayKey()) btn.classList.add("is-today");
+    btn.className = "month-calendar__day";
+    if (d.getMonth() !== month) btn.classList.add("is-other-month");
+    if (key === today) btn.classList.add("is-today");
     if (key === selectedDate) btn.classList.add("is-selected");
-    btn.innerHTML = `<span class="week-day__num">${d.getDate()}</span><span class="week-day__label">${WEEKDAY_LABELS[d.getDay()]}</span>`;
+    btn.textContent = String(d.getDate());
     btn.addEventListener("click", () => {
       selectedDate = key;
-      renderWeekStrip();
+      syncCalendarViewToSelected();
+      renderMonthCalendar();
       renderTodos();
     });
-    weekStrip.append(btn);
+    calendarGrid.append(btn);
   }
+}
+
+function initCalendarNav() {
+  calendarPrev.addEventListener("click", () => {
+    calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+    renderMonthCalendar();
+  });
+  calendarNext.addEventListener("click", () => {
+    calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+    renderMonthCalendar();
+  });
 }
 
 function renderDdays() {
@@ -915,6 +948,7 @@ function closeDdayModal() {
 }
 
 function initTodoEvents() {
+  initCalendarNav();
   openTodoModalBtn.addEventListener("click", openTodoModal);
   openDdayModalBtn.addEventListener("click", openDdayModalFn);
 
@@ -1013,6 +1047,7 @@ function resetAll() {
   ddays = [];
   navView = "today";
   selectedDate = todayKey();
+  syncCalendarViewToSelected();
   stats = { date: todayKey(), sessions: 0, minutes: 0 };
 
   settings = { theme: "dark", color: "warm", notifications: true, sound: true };
@@ -1027,7 +1062,7 @@ function resetAll() {
   updateNotifyStatus();
   renderTimer();
   renderStats();
-  renderWeekStrip();
+  renderMonthCalendar();
   renderDdays();
   setNav("today");
   renderTodos();
@@ -1110,9 +1145,10 @@ function boot() {
   initTodoEvents();
   resetAllBtn.addEventListener("click", resetAll);
 
+  syncCalendarViewToSelected();
   renderTimer();
   renderStats();
-  renderWeekStrip();
+  renderMonthCalendar();
   renderDdays();
   setNav("today");
   renderTodos();
