@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260710a" />
+    <link rel="stylesheet" href="./styles.css?v=20260710b" />
   </head>
   <body>
     <header class="topbar">
@@ -188,10 +188,12 @@
                 <span id="calendarTitle" class="month-calendar__title">2026년 7월</span>
                 <button id="calendarNext" class="month-calendar__nav" type="button" aria-label="다음 달">›</button>
               </div>
-              <div class="month-calendar__weekdays" aria-hidden="true">
-                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+              <div class="month-calendar__body">
+                <div class="month-calendar__weekdays" aria-hidden="true">
+                  <span class="month-calendar__weekday">일</span><span class="month-calendar__weekday">월</span><span class="month-calendar__weekday">화</span><span class="month-calendar__weekday">수</span><span class="month-calendar__weekday">목</span><span class="month-calendar__weekday">금</span><span class="month-calendar__weekday">토</span>
+                </div>
+                <div class="month-calendar__grid" id="calendarGrid"></div>
               </div>
-              <div class="month-calendar__grid" id="calendarGrid"></div>
             </div>
 
             <div class="todo-main__body">

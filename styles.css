@@ -880,38 +880,38 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
   background: rgba(255, 255, 255, 0.14);
 }
 
-.month-calendar__weekdays {
+.month-calendar__body {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 6px;
-  text-align: center;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
 }
 
-.month-calendar__weekdays span {
+.month-calendar__weekdays,
+.month-calendar__grid {
+  display: contents;
+}
+
+.month-calendar__weekday {
+  display: grid;
+  place-items: center;
+  height: 22px;
   font-size: 10px;
   font-weight: 800;
   color: var(--muted);
-  padding: 2px 0;
 }
 
-.month-calendar__weekdays span:first-child {
+.month-calendar__weekday:first-child {
   color: #f87171;
 }
 
-.month-calendar__weekdays span:last-child {
+.month-calendar__weekday:last-child {
   color: #60a5fa;
-}
-
-.month-calendar__grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
 }
 
 .month-calendar__day {
   appearance: none;
   border: 0;
+  width: 100%;
   aspect-ratio: 1;
   min-height: 0;
   max-height: 34px;
@@ -925,6 +925,7 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
   place-items: center;
   transition: background 150ms, color 150ms, box-shadow 150ms;
   padding: 0;
+  box-sizing: border-box;
 }
 
 .month-calendar__day:hover:not(.is-selected) {
